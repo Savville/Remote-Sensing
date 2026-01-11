@@ -1,0 +1,34 @@
+# Large high-resolution image files
+IMAGES/*_HighRes.tiff
+IMAGES/*_HighRes.tif
+*.tiff
+
+# Large PNG files
+IMAGES/Narok Soil Fraction.png
+
+# GeoTIFF raster data files
+*.tif
+
+# QGIS project files
+*.qgz
+
+# Auxiliary XML files
+*.aux.xml
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
