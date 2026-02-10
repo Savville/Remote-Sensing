@@ -60,11 +60,6 @@ function getAutoEndmembers(img, region) {
   };
 }
 
-
-
-
-
-
 // -----------------------------------------------------------------------------
 // 4. MAIN LOOP OVER SITES
 // -----------------------------------------------------------------------------
@@ -92,22 +87,14 @@ Object.keys(sites).forEach(function(siteName) {
   // B. Unmixing + RMSE CALCULATION (Addressing "Accuracy" Critique)
   var processed = dataset.map(function(image) {
     
-    // 1. Unmix (endmemberList order: Soil, Veg, Shadow)
-    // This produces bands in order: [0]=Soil, [1]=Veg, [2]=Shadow
+    // 1. Unmix
     var unmixed = image.unmix(endmemberList).max(0);
     var total = unmixed.reduce(ee.Reducer.sum());
-    var normalized = unmixed.divide(total);
+    var fractions = unmixed.divide(total).rename(['Soil', 'Veg', 'Shadow']);
     
-    // 2. REORDER bands to alphabetical: Shadow, Soil, Veg
-    // Select band 2 (Shadow), band 0 (Soil), band 1 (Veg)
-    var fractions = ee.Image.cat([
-      normalized.select([2]),  // Shadow data
-      normalized.select([0]),  // Soil data
-      normalized.select([1])   // Veg data
-    ]).rename(['Shadow', 'Soil', 'Veg']);
-    
-    // 3. Calculate RMSE (Reconstruction Error)
-    // Now bands are correctly ordered: Shadow=Shadow, Soil=Soil, Veg=Veg
+    // 2. Calculate RMSE (Reconstruction Error)
+    // We try to rebuild the original pixel from our fractions
+    // Modeled_Pixel = (Frac_Soil * Soil_Spec) + (Frac_Veg * Veg_Spec) ...
     
     // Create constant images for endmembers
     var soilImg = ee.Image.constant(em.soil);
@@ -127,11 +114,15 @@ Object.keys(sites).forEach(function(siteName) {
   });
   
   // ---------------------------------------------------------------------------
+  // 5. OUTPUTS PER SITE
+  // ---------------------------------------------------------------------------
+  
+  // ---------------------------------------------------------------------------
   // CORRECTED CHART: NOW INCLUDES SHADOW
   // ---------------------------------------------------------------------------
   
   print(ui.Chart.image.series({
-    imageCollection: processed.select(['Shadow', 'Soil', 'Veg']),
+    imageCollection: processed.select(['Soil', 'Veg', 'Shadow']),
     region: bounds,
     reducer: ee.Reducer.mean(),
     scale: 30
@@ -140,128 +131,12 @@ Object.keys(sites).forEach(function(siteName) {
     vAxis: {title: 'Fractional Cover (0-1)'},
     lineWidth: 2,
     series: {
-      0: {color: 'blue', labelInLegend: 'Shadow/Moisture'},
-      1: {color: 'red', labelInLegend: 'Soil'},
-      2: {color: 'green', labelInLegend: 'Vegetation'}
+      0: {color: 'red', labelInLegend: 'Soil'},
+      1: {color: 'green', labelInLegend: 'Vegetation'},
+      2: {color: 'blue', labelInLegend: 'Shadow/Moisture'}
     }
-  }));
-  
-  
-  
-  
-  
-  
-  
-  // ---------------------------------------------------------------------------
-  // 5. OUTPUTS PER SITE
-  // ---------------------------------------------------------------------------
-  
-  // Chart: Soil Trends
-  print(ui.Chart.image.series({
-    imageCollection: processed.select(['Soil', 'Veg']),
-    region: bounds,
-    reducer: ee.Reducer.mean(),
-    scale: 30
-  }).setOptions({
-    title: siteName + ': Soil vs Veg Dynamics',
-    vAxis: {title: 'Fraction'},
-    series: {0: {color: 'red', labelInLegend: 'Soil'}, 1: {color: 'green', labelInLegend: 'Vegetation'}}
-  }));
-  
-  // Chart: RMSE (The Accuracy Metric)
-  // Low RMSE (<0.05) means the model is physically valid. High RMSE means error.
-  print(ui.Chart.image.series({
-    imageCollection: processed.select('RMSE'),
-    region: bounds,
-    reducer: ee.Reducer.mean(),
-    scale: 30
-  }).setOptions({
-    title: siteName + ': Model Accuracy (RMSE)',
-    vAxis: {title: 'RMSE (Lower is Better)'},
-    colors: ['black']
   }));
   
   // Add Layer to Map (Visual Check)
   Map.addLayer(processed.select('Soil').mean().clip(bounds), {min:0, max:1, palette:['white', 'red']}, siteName + ' Mean Soil');
-  
-  // ---------------------------------------------------------------------------
-  // 6. NAROK-SPECIFIC VALIDATION & EXPORT
-  // ---------------------------------------------------------------------------
-  
-  if (siteName === 'Narok_Crops') {
-    
-    // Find the single clearest image in the Harvest Season (Aug-Sept)
-    var validationImage = dataset.filterDate('2023-08-01', '2023-09-30')
-                                 .sort('CLOUDY_PIXEL_PERCENTAGE')
-                                 .first();
-    
-    if (validationImage) {
-      print('Narok Validation Image Found for Date:', validationImage.date());
-      var valClipped = validationImage.clip(bounds);
-      
-      // Unmix this specific image
-      var valUnmixed = valClipped.unmix(endmemberList);
-      var valNonNeg = valUnmixed.max(0);
-      var valSum = valNonNeg.reduce(ee.Reducer.sum());
-      var valNormalized = valNonNeg.divide(valSum);
-      
-      // Reorder to alphabetical: Shadow, Soil, Veg
-      var valFractions = ee.Image.cat([
-        valNormalized.select([2]),  // Shadow
-        valNormalized.select([0]),  // Soil
-        valNormalized.select([1])   // Veg
-      ]).rename(['Shadow', 'Soil', 'Veg']);
-      
-      var valSoil = valFractions.select('Soil').rename('Soil_Fraction');
-      
-      // Visualization Parameters
-      var visRGB = {min: 0, max: 0.3, bands: ['B4', 'B3', 'B2']};
-      var visSoil = {min: 0, max: 1, palette: ['white', 'orange', 'red']};
-      
-      // Add Layers to Map for Visual Validation
-      Map.addLayer(valClipped, visRGB, 'Narok (A) True Color Reference');
-      Map.addLayer(valSoil, visSoil, 'Narok (B) Soil Fraction Model');
-      
-      // Export Tasks (Go to "Tasks" tab to run these)
-      
-      // Export 1: Time Series CSV Data
-      var statsTable = processed.map(function(img) {
-        var stats = img.select(['Shadow', 'Soil', 'Veg']).reduceRegion({
-          reducer: ee.Reducer.mean(), 
-          geometry: roi, 
-          scale: 30
-        });
-        return ee.Feature(null, stats).set('date', img.date().format('YYYY-MM-dd'));
-      });
-      
-      Export.table.toDrive({
-        collection: statsTable,
-        description: 'Narok_TimeSeries_Data',
-        fileFormat: 'CSV'
-      });
-      
-      // Export 2: Validation Soil Fraction Map (for QGIS Figure)
-      Export.image.toDrive({
-        image: valSoil,
-        description: 'Narok_Soil_Fraction_Map',
-        scale: 10,
-        region: bounds,
-        fileFormat: 'GeoTIFF'
-      });
-      
-      // Export 3: True Color Reference (for QGIS Figure)
-      Export.image.toDrive({
-        image: valClipped.select(['B4', 'B3', 'B2']),
-        description: 'Narok_TrueColor_Ref',
-        scale: 10,
-        region: bounds,
-        fileFormat: 'GeoTIFF'
-      });
-      
-      print('✓ Narok export tasks created. Check the Tasks tab to run them.');
-      
-    } else {
-      print('⚠ WARNING: No clear validation image found for Narok in Aug-Sept period.');
-    }
-  }
 });
