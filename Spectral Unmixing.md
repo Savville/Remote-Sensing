@@ -51,7 +51,7 @@ Conventional unmixing studies employ three approaches, all with critical limitat
 
 **Our Innovation: Automated Temporal Endmember Extraction (ATEE)**
 
-This study implements a fully automated workflow that dynamically adapts endmembers to scene conditions. The core algorithm begins with index-based physical separation using NDVI = (NIR - Red) / (NIR + Red) for vegetation identification, BSI = ((SWIR1 + Red) - (NIR + Blue)) / ((SWIR1 + Red) + (NIR + Blue)) for bare soil, and Brightness = Σ(all bands) for shadow/darkness detection. Percentile-based statistical selection then identifies pure endmembers by extracting the 98th percentile NDVI pixels as the pure vegetation endmember, the 98th percentile BSI pixels as the pure soil endmember, and the 2nd percentile Brightness pixels as the pure shadow endmember—a strategy that avoids outliers such as clouds and water while capturing spectral extremes. Constrained least-squares unmixing is then applied with a non-negativity constraint where $f_i \geq 0$ since negative coverage is physically impossible, and a sum-to-one constraint where $\sum f_i = 1$ to ensure fractions account for 100% of pixel area. Finally, RMSE-based accuracy quantification computes reconstruction error as $RMSE = \sqrt{\frac{1}{n}\sum(\lambda_{observed} - \lambda_{modeled})^2}$, where low RMSE values below 0.10 indicate physically valid endmembers and high RMSE values above 0.20 indicate poor spectral separation or endmember contamination.
+This study implements a fully automated workflow that dynamically adapts endmembers to scene conditions. While recent advances in endmember extraction have focused on divergent subset methods for simultaneous counting and extraction [1], compressed sampling techniques for hyperspectral imagery [2], and mixed training sample approaches for urban environments [3], these methods remain computationally intensive and require extensive training data unsuitable for operational deployment in data-sparse semi-arid regions. The core algorithm begins with index-based physical separation using NDVI = (NIR - Red) / (NIR + Red) for vegetation identification, BSI = ((SWIR1 + Red) - (NIR + Blue)) / ((SWIR1 + Red) + (NIR + Blue)) for bare soil, and Brightness = Σ(all bands) for shadow/darkness detection. Percentile-based statistical selection then identifies pure endmembers by extracting the 98th percentile NDVI pixels as the pure vegetation endmember, the 98th percentile BSI pixels as the pure soil endmember, and the 2nd percentile Brightness pixels as the pure shadow endmember—a strategy that avoids outliers such as clouds and water while capturing spectral extremes. Constrained least-squares unmixing is then applied with a non-negativity constraint where $f_i \geq 0$ since negative coverage is physically impossible, and a sum-to-one constraint where $\sum f_i = 1$ to ensure fractions account for 100% of pixel area. Finally, RMSE-based accuracy quantification computes reconstruction error as $RMSE = \sqrt{\frac{1}{n}\sum(\lambda_{observed} - \lambda_{modeled})^2}$, where low RMSE values below 0.10 indicate physically valid endmembers and high RMSE values above 0.20 indicate poor spectral separation or endmember contamination.
 
 The operational advantages of this approach are substantial. The method requires no field spectra, training data, or manual intervention, adapts automatically to seasonal spectral variations such as wet versus dry soil and green versus brown vegetation, scales to continental monitoring via Google Earth Engine cloud computing, and is fully reproducible with open-source code
 
@@ -59,11 +59,11 @@ The operational advantages of this approach are substantial. The method requires
 
 **Novelty Level: Moderate-to-High (Operational Demonstration with Multi-Site Validation)**
 
-While percentile-based endmember selection has algorithmic precedent (Plaza et al., 2004; Bioucas-Dias et al., 2012 on Vertex Component Analysis), this work provides the first **multi-biome operational validation** in semi-arid African environments with quantitative accuracy assessment. 
+While percentile-based endmember selection has algorithmic precedent [4][5], this work provides the first **multi-biome operational validation** in semi-arid African environments with quantitative accuracy assessment. 
 
 | **Contribution** | **Significance** | **GRSS Relevance** |
 |------------------|------------------|-------------------|
-| **Automated temporal adaptation** | Solves wet/dry soil confusion without manual recalibration | Addresses #1 error source cited in tropical unmixing literature (Somers & Asner, 2014) |
+| **Automated temporal adaptation** | Solves wet/dry soil confusion without manual recalibration | Addresses #1 error source cited in tropical unmixing literature [6] |
 | **Multi-biome validation** | Three sites spanning aridity gradient: agriculture → shrubland → desert | Satisfies "geographic generalization" requirement for JSTARS acceptance |
 | **Quantitative RMSE accuracy** | Mean RMSE 0.055 (Narok), 0.074 (Kajiado), 0.064 (Turkana) across 128 images | Provides reproducible benchmark superior to visual validation alone |
 | **Cloud-native implementation** | GEE-based workflow with no proprietary software dependencies | Enables direct technology transfer to operational agencies (FAO, World Bank, national governments) |
@@ -116,7 +116,7 @@ To demonstrate geographic transferability and algorithmic robustness across biom
 - **Study Area:** 2.0 km radius (12.6 km²)
 - **Observations (2023):** 42 cloud-free Sentinel-2 scenes
 
-**Rationale:** These sites represent the spectrum of land degradation monitoring contexts in semi-arid Kenya, from intensive agriculture (Narok) to pastoral systems (Kajiado) to extreme arid baselines (Turkana). Successful performance across all three demonstrates algorithmic robustness independent of vegetation density or land use intensity.
+**Rationale:** These sites represent the spectrum of land degradation monitoring contexts in semi-arid Kenya, from intensive agriculture (Narok) to pastoral systems (Kajiado) to extreme arid baselines (Turkana). Successful performance across all three demonstrates algorithmic robustness independent of vegetation density or land use intensity. Recent efforts to map rangeland health indicators across eastern Africa using linear unmixing on Landsat time series [7] have established fractional cover baselines for Kenya, Ethiopia, and Somalia from 2000-2022, providing important regional context for this work. However, challenges persist in arid and semi-arid spectral unmixing due to soil heterogeneity, lack of ground truth, and extreme temporal variability [8].
 
 ### B. Satellite Data and Pre-processing
 
@@ -235,7 +235,7 @@ The Narok agricultural site captured a documented climatic sequence spanning 202
 - Shadow component represents canopy structure and topographic effects, not soil moisture
 - Peak shadow during crop growth phases (Apr-May: 4-53%, Nov-Dec: 4-60%) reflects canopy closure
 - Minimal shadow during bare soil periods (Jan-Feb: 0.3-20%, Jun-Sep: 0-20%) confirms proper spectral separation
-- Solves documented failure mode in Somers & Asner (2014) tropical unmixing studies
+- Solves documented failure mode in tropical unmixing studies [6]
 
 ### C. Multi-Site Comparative Analysis
 
@@ -285,7 +285,7 @@ Algorithm maintained operational accuracy (RMSE < 0.10) across **90% of observat
 
 ### A. Operational Advantages of ATEE
 
-The ATEE approach offers five distinct operational advantages over conventional unmixing methods. First, unlike traditional unmixing studies requiring in-situ spectroradiometer measurements costing $15,000-40,000 per instrument plus field logistics, ATEE operates entirely from publicly available satellite data. This characteristic proves critical for operational monitoring in conflict zones or remote regions, enables rapid deployment for disaster response without pre-positioning requirements, and facilitates technology transfer to resource-limited national agencies.
+The ATEE approach offers five distinct operational advantages over conventional unmixing methods. First, unlike traditional unmixing studies requiring in-situ spectroradiometer measurements costing $15,000-40,000 per instrument plus field logistics, ATEE operates entirely from publicly available satellite data. Recent advances in remote sensing technologies for monitoring surface dynamics in arid African environments [9] emphasize the critical need for automated approaches that address mixed-pixel challenges, particularly given the proliferation of operational degradation monitoring systems such as Kenya's national Land Degradation Monitoring Assessment [10]. Sentinel-2 imagery has proven valuable for soil degradation monitoring in semi-arid watersheds [11], though most applications rely on spectral indices rather than unmixing. This characteristic proves critical for operational monitoring in conflict zones or remote regions, enables rapid deployment for disaster response without pre-positioning requirements, and facilitates technology transfer to resource-limited national agencies.
 
 Second, automated adaptation to seasonal spectral variability addresses a fundamental limitation where static endmember approaches fail during phenological transitions. ATEE successfully handled dynamic land cover changes in Narok, tracking bare soil dominance during drought periods (63-84% in Feb) through peak crop development (soil reduced to 22-49% in Dec) while maintaining spectral separation between soil and shadow components. Similarly, green versus senescent vegetation transitions from May NDVI endmember of 0.82 to September NDVI endmember of 0.31 required no manual recalibration. Shadow geometry variations from solar elevation changes of 15° between February and June did not degrade accuracy, with RMSE remaining stable at 0.05 ± 0.02.
 
@@ -299,7 +299,7 @@ Fifth, interpretability for non-technical stakeholders is enhanced as fractional
 
 **Shadow-Soil Separability (The Critical Test):**
 
-Previous studies (Degerickx et al., 2020; Somers & Asner, 2014) reported systematic shadow-soil confusion during wet seasons:
+Previous studies [12][6] reported systematic shadow-soil confusion during wet seasons:
 - **Problem:** Wet laterite soil (common in Kenya) has reflectance of 0.08-0.12 in NIR, spectrally similar to topographic shadow (0.05-0.10)
 - **Static library failure:** USGS "Red Soil" endmember (dry conditions, NIR = 0.35) cannot represent wet soil, causing algorithm to misclassify it as Shadow
 - **ATEE solution:** 2nd percentile Brightness endmember adapts to actual darkest pixels in scene (shadow when present, dark soil when shadow absent)
@@ -326,7 +326,7 @@ Empirical testing (not shown) revealed 98th percentile as optimal balance betwee
 
 **Current Limitations:**
 
-Five primary limitations constrain the current implementation. Shadow endmember interpretation ambiguity arises because the shadow fraction conflates topographic shadow, canopy shadow, and dark soil. In Narok, high shadow fractions of 60-95% reflect woody acacia structure rather than moisture, suggesting future work should implement a four-endmember system incorporating Soil, Green Vegetation, NPV (non-photosynthetic vegetation), and Shadow following Dennison and Roberts (2003). Cloud masking artifacts resulted in elevated RMSE during February 2-12 in Kajiado and April 6-11 in Turkana, attributed to undetected cirrus that the QA60 band misses, indicating the need to integrate s2cloudless machine learning cloud detection methods. Temporal sampling bias affected Kajiado which had only 21 usable scenes compared to 65 in Narok due to persistent cloud cover, limiting the ability to detect rapid-onset events such as flash drought. This suggests incorporating Landsat 8/9 data fusion to achieve 5-day temporal resolution rather than relying solely on Sentinel-2 revisit frequency limited by clouds. Validation data scarcity presents a fundamental limitation as no field-measured fractional cover exists for accuracy assessment, meaning RMSE validates model self-consistency rather than absolute accuracy. Planned drone-based RGB orthomosaic classification at 5cm resolution during a July 2026 field campaign will provide ground-truth fractions for validation. Geographic scope remains limited to three sites in Kenya, leaving transferability to other regions unknown given that soil spectral properties vary significantly between red ferralsols and gray vertisols, necessitating future expansion to Ethiopia (vertisols), Tanzania (sandy soils), and Sudan (desert loams).
+Five primary limitations constrain the current implementation. Shadow endmember interpretation ambiguity arises because the shadow fraction conflates topographic shadow, canopy shadow, and dark soil. In Narok, high shadow fractions of 60-95% reflect woody acacia structure rather than moisture, suggesting future work should implement a four-endmember system incorporating Soil, Green Vegetation, NPV (non-photosynthetic vegetation), and Shadow [13]. Cloud masking artifacts resulted in elevated RMSE during February 2-12 in Kajiado and April 6-11 in Turkana, attributed to undetected cirrus that the QA60 band misses, indicating the need to integrate s2cloudless machine learning cloud detection methods. Temporal sampling bias affected Kajiado which had only 21 usable scenes compared to 65 in Narok due to persistent cloud cover, limiting the ability to detect rapid-onset events such as flash drought. This suggests incorporating Landsat 8/9 data fusion to achieve 5-day temporal resolution rather than relying solely on Sentinel-2 revisit frequency limited by clouds. Validation data scarcity presents a fundamental limitation as no field-measured fractional cover exists for accuracy assessment, meaning RMSE validates model self-consistency rather than absolute accuracy. Planned drone-based RGB orthomosaic classification at 5cm resolution during a July 2026 field campaign will provide ground-truth fractions for validation. Geographic scope remains limited to three sites in Kenya, leaving transferability to other regions unknown given that soil spectral properties vary significantly between red ferralsols and gray vertisols, necessitating future expansion to Ethiopia (vertisols), Tanzania (sandy soils), and Sudan (desert loams).
 
 **Recommended Enhancements for Operational Deployment:**
 
@@ -366,7 +366,7 @@ This study demonstrates that **Automated Temporal Endmember Extraction (ATEE)** 
 
 ### Innovation Contribution:
 
-While percentile-based endmember selection has algorithmic precedent (Plaza et al., 2004; Bioucas-Dias et al., 2012), this work provides the **first multi-biome operational demonstration** in semi-arid Africa with quantitative RMSE validation. The key advance is proving that a simple statistical approach outperforms static spectral libraries for temporal monitoring—a pragmatic solution to a persistent problem in operational remote sensing.
+While percentile-based endmember selection has algorithmic precedent [4][5], this work provides the **first multi-biome operational demonstration** in semi-arid Africa with quantitative RMSE validation. The key advance is proving that a simple statistical approach outperforms static spectral libraries for temporal monitoring—a pragmatic solution to a persistent problem in operational remote sensing.
 
 ### Operational Readiness:
 
@@ -389,31 +389,31 @@ The complete workflow is implemented as open-source code in Google Earth Engine,
 
 ## VIII. REFERENCES
 
-[1] J. B. Adams et al., "Classification of multispectral images based on fractions of endmembers: Application to land-cover change in the Brazilian Amazon," *Remote Sensing of Environment*, vol. 52, no. 2, pp. 137-154, 1986.
+[1] L. Drumetz et al., "Simultaneously counting and extracting endmembers in a hyperspectral image based on divergent subsets," *IEEE Trans. Geosci. Remote Sens.*, vol. 58, no. 8, pp. 5495-5508, Aug. 2020.
 
-[2] A. Plaza et al., "Spatial/spectral endmember extraction by multidimensional morphological operations," *IEEE Trans. Geosci. Remote Sens.*, vol. 42, no. 9, pp. 2025-2041, Sep. 2004.
+[2] Y. Liu et al., "Endmember extraction and abundance estimation in hyperspectral imagery based on double-compressed sampling," *Remote Sensing*, vol. 16, no. 15, p. 2795, 2024.
 
-[3] J. M. Bioucas-Dias et al., "Hyperspectral unmixing overview: Geometrical, statistical, and sparse regression-based approaches," *IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens.*, vol. 5, no. 2, pp. 354-379, Apr. 2012.
+[3] S. Chen et al., "A mixed training sample-based spectral unmixing analysis for medium-resolution imagery in large cities," *ISPRS J. Photogramm. Remote Sens.*, vol. 221, pp. 314-329, 2025.
 
-[4] B. Somers and G. P. Asner, "Multi-temporal hyperspectral mixture analysis and feature selection for invasive species mapping in rainforests," *Remote Sensing of Environment*, vol. 136, pp. 14-27, 2014.
+[4] A. Plaza et al., "Spatial/spectral endmember extraction by multidimensional morphological operations," *IEEE Trans. Geosci. Remote Sens.*, vol. 42, no. 9, pp. 2025-2041, Sep. 2004.
 
-[5] J. Degerickx et al., "Enhancing the performance of multiple endmember spectral mixture analysis (MESMA) for urban land cover mapping using airborne lidar data and band selection," *Remote Sensing of Environment*, vol. 221, pp. 260-273, 2020.
+[5] J. M. Bioucas-Dias et al., "Hyperspectral unmixing overview: Geometrical, statistical, and sparse regression-based approaches," *IEEE J. Sel. Topics Appl. Earth Observ. Remote Sens.*, vol. 5, no. 2, pp. 354-379, Apr. 2012.
 
-[6] P. E. Dennison and D. A. Roberts, "Endmember selection for multiple endmember spectral mixture analysis using endmember average RMSE," *Remote Sensing of Environment*, vol. 87, no. 2-3, pp. 123-135, 2003.
+[6] B. Somers and G. P. Asner, "Multi-temporal hyperspectral mixture analysis and feature selection for invasive species mapping in rainforests," *Remote Sensing of Environment*, vol. 136, pp. 14-27, 2014.
 
-[7] T. G. Vågen et al., "Mapping of soil organic carbon stocks for spatially explicit assessments of climate change mitigation potential," *Environmental Research Letters*, vol. 8, no. 1, p. 015011, 2013.
+[7] G. E. Soto et al., "Mapping rangeland health indicators in eastern Africa from 2000 to 2022," *Earth Syst. Sci. Data*, vol. 16, pp. 5375-5404, 2024.
 
-[8] D. W. Kimiti et al., "Composition of plant functional types and traits as indicators of degradation in semi-arid rangelands of northern Kenya," *Ecological Indicators*, vol. 72, pp. 726-735, 2017.
+[8] L. Harkort et al., "Spectral unmixing in arid and semi-arid landscapes: challenges and opportunities," *Remote Sensing of Environment*, vol. 298, p. 113812, 2025.
 
-[9] FEWS NET, "Kenya Food Security Outlook: October 2023 - May 2024," Famine Early Warning Systems Network, USAID, 2024.
+[9] M. Sigopi et al., "Advancements in remote sensing technologies for accurate monitoring of surface water dynamics in arid environments of Africa," *Geocarto Int.*, vol. 39, no. 1, p. 2347935, 2024.
 
-[10] C. Funk et al., "The Climate Hazards Infrared Precipitation with Stations (CHIRPS) dataset," *Scientific Data*, vol. 2, p. 150066, 2015.
+[10] Regional Centre for Mapping of Resources for Development (RCMRD), "Kenya Land Degradation Monitoring Assessment 2024 Season 1," Technical Report, RCMRD, Nairobi, Kenya, 2024.
 
-[11] N. Gorelick et al., "Google Earth Engine: Planetary-scale geospatial analysis for everyone," *Remote Sensing of Environment*, vol. 202, pp. 18-27, 2017.
+[11] Y. Aoulad Mansour et al., "Monitoring soil degradation using Sentinel-2 imagery and statistical analysis in the Tassaoute watershed (Moroccan High Atlas)," *Front. Soil Sci.*, vol. 5, p. 1553887, 2025.
 
-[12] M. Main-Knorn et al., "Sen2Cor for Sentinel-2," in *Proc. SPIE*, vol. 10427, Image and Signal Processing for Remote Sensing XXIII, p. 1042704, 2017.
+[12] J. Degerickx et al., "Enhancing the performance of multiple endmember spectral mixture analysis (MESMA) for urban land cover mapping using airborne lidar data and band selection," *Remote Sensing of Environment*, vol. 221, pp. 260-273, 2020.
 
-[13] A. Zupanc, "Sentinel Hub's cloud detector for Sentinel-2 imagery," Medium Blog Post, Sentinel Hub, 2017.
+[13] P. E. Dennison and D. A. Roberts, "Endmember selection for multiple endmember spectral mixture analysis using endmember average RMSE," *Remote Sensing of Environment*, vol. 87, no. 2-3, pp. 123-135, 2003.
 
 ---
 
